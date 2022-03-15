@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Music Player</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <div style="display: flex; height: 100vh">
+      <!-- start sidebar -->
+      <div class="sidebar">
+        <!-- added folders -->
+
+        <div class="head">Added Folders</div>
+        <hr class="divider" />
+        <div class="content">
+          <ul class="list" id="folderList">
+            <li class="item">Folder 1</li>
+            <li class="item">Folder 2</li>
+          </ul>
+          <li
+            class="item"
+            onclick="add_new_folder()"
+            style="justify-content: center"
+          >
+            + Add New Folder
+          </li>
+        </div>
+        <!-- playlists -->
+        <div style="margin-top: 50px"></div>
+
+        <div class="head">Playlists</div>
+        <hr class="divider" />
+        <div class="content">
+          <ul class="list" id="playList">
+            <!-- <li class="item">Playlist 1</li>
+            <li class="item">Playlist 2</li> -->
+          </ul>
+          <li
+            class="item"
+            onclick="openModel1()"
+            style="justify-content: center"
+          >
+            + Add New Playlist
+          </li>
+        </div>
+      </div>
+      <!-- end sidebar -->
+
+      <div class="container">
+        <ul class="songs-list" id="songList"></ul>
+
+        <div class="player">
+          <span id="songTitle"> </span>
+
+          <div>
+            <audio controls id="audio">
+              <source
+                src="file:///Users/apple/Music/shutterstock/A%20Gentle%20Breeze%20(Gentle,Light,Uplifting).wav"
+                type="audio/wav"
+                id="audioSource"
+              />
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+      <!-- Modal content -->
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div style="display: flex; align-items: center">
+          <label for="title" style="color: white"
+            >Choose Playlist : &nbsp;</label
+          >
+          <div class="custom-select" style="width: 200px">
+            <select name="title" id="selectList"></select>
+          </div>
+        </div>
+
+        <br /><br />
+        <button onclick="add_to_playlist()">ADD</button>
+      </div>
+    </div>
+
+    <!-- The Modal -->
+    <div id="myModal1" class="modal">
+      <!-- Modal content -->
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div style="display: flex; align-items: center">
+          <label for="title" style="color: white"
+            >Enter Name for Playlist : &nbsp;</label
+          >
+
+          <input type="text" id="playlistInput" />
+        </div>
+
+        <br /><br />
+        <button onclick="create_new_playlist()">CREATE</button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

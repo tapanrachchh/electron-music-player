@@ -1,0 +1,31 @@
+{
+  "name": "music-electron",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^16.0.7",
+    "electron-builder": "^22.14.13",
+    "electron-packager": "^15.4.0"
+  },
+  "dependencies": {
+    "@electron/remote": "^2.0.4"
+  },
+  "productName": "Music Player",
+  "appVersion": "1.0.0",
+  "build": {
+    "appId": "music-player-electron",
+    "mac": {
+      "category": "your.app.category.type",
+      "icon": "images/logo.icns"
+    }
+  }
+}
