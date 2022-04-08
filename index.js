@@ -28,7 +28,7 @@ function createWindow() {
       nodeIntegration: true,
     },
   });
-  // win.webContents.openDevTools();
+  win.webContents.openDevTools();
 
   // win.maximize();
   win.loadFile("index.html");
@@ -290,6 +290,8 @@ ipcMain.on("pre_selected", (event, _path) => {
   let arr = [];
 
   fs.readdir(_path, async (err, files) => {
+    console.log("path",_path)
+    console.log("files",files)
     await Promise.all(
       files.map(async (i, index) => {
         let audio_exts = [".mp3", ".wav"];

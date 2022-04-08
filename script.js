@@ -108,7 +108,7 @@ ipcRenderer.on("on-loaded", function (evt, data) {
   folderList.innerHTML = data
     .map(
       (each) =>
-        `<li class="item" onclick="load_folder('${each.path}')">
+        `<li class="item" onclick="load_folder('${each.path.replaceAll("\\","/")}')">
         <span></span>
         <span>
         <img src="images/folder.png" width="18px"/> ${each.name} 
@@ -185,6 +185,7 @@ function add_to_playlist(event) {
 }
 
 function load_folder(path) {
+  console.log("check load_folder path",path)
   ipcRenderer.send("pre_selected", path);
 }
 
