@@ -5,6 +5,7 @@ var toBeAdded = false;
 // Get the modal
 var modal = document.getElementById("myModal");
 var modal1 = document.getElementById("myModal1");
+var modal2 = document.getElementById("myModal2");
 
 // Get the button that opens the modal
 var btn = document.getElementsByClassName("myBtn");
@@ -12,6 +13,7 @@ var btn = document.getElementsByClassName("myBtn");
 // Get the <span> element that closes the modal
 var span = document.getElementsByClassName("close")[0];
 var span1 = document.getElementsByClassName("close")[1];
+var span2 = document.getElementsByClassName("close")[2];
 
 // When the user clicks the button, open the modal
 // btn.onclick = function (event) {
@@ -28,6 +30,13 @@ function create_new_playlist() {
   modal1.style.display = "none";
 }
 
+function close_and_restart() {
+
+  modal2.style.display = "none";
+
+  ipcRenderer.send("close_and_restart",null);
+}
+
 function openModel(event, path) {
   event.stopPropagation();
   toBeAdded = path;
@@ -37,6 +46,11 @@ function openModel1(path) {
   modal1.style.display = "block";
 }
 
+
+function openModel2(path) {
+  modal2.style.display = "block";
+}
+
 // When the user clicks on <span> (x), close the modal
 span.onclick = function () {
   modal.style.display = "none";
@@ -44,6 +58,10 @@ span.onclick = function () {
 
 span1.onclick = function () {
   modal1.style.display = "none";
+};
+
+span2.onclick = function () {
+  modal2.style.display = "none";
 };
 
 // When the user clicks anywhere outside of the modal, close it
@@ -57,10 +75,11 @@ function delete_folder(event, path) {
   event.stopPropagation();
   ipcRenderer.send("delete_folder", path);
 
-  console.log("deleting folder", path);
+  console.log("deleting folder 123", path);
 }
 
 function delete_playlist(event, name) {
+  console.log("del pl name",name)
   event.stopPropagation();
   ipcRenderer.send("delete_playlist", name);
 }
@@ -102,13 +121,13 @@ ipcRenderer.on("on-loaded-playlists", function (evt, data) {
 });
 
 ipcRenderer.on("on-loaded", function (evt, data) {
-  console.log("LOADED", data);
+  console.log("LOADED Data", data);
 
   const folderList = document.getElementById("folderList");
   folderList.innerHTML = data
     .map(
       (each) =>
-        `<li class="item" onclick="load_folder('${each.path.replaceAll("\\","/")}')">
+        `<li class="item" onclick="load_folder('${each.path}')">
         <span></span>
         <span>
         <img src="images/folder.png" width="18px"/> ${each.name} 
@@ -118,6 +137,11 @@ ipcRenderer.on("on-loaded", function (evt, data) {
         <span onclick="delete_folder(event,'${each.path}')"><img src="images/bin.png" width="16px"/></span></li>  `
     )
     .join("");
+});
+
+
+ipcRenderer.on("clear-db-call", function (evt, data) {
+ openModel2()
 });
 
 ipcRenderer.on("on-playlist-loaded", function (evt, data) {

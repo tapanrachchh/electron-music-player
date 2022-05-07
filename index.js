@@ -27,8 +27,9 @@ function createWindow() {
       enableRemoteModule: true,
       nodeIntegration: true,
     },
+    icon:"images/logo.png"
   });
-  win.webContents.openDevTools();
+  // win.webContents.openDevTools();
 
   // win.maximize();
   win.loadFile("index.html");
@@ -47,6 +48,15 @@ const template = [
   {
     label: "Main",
     submenu: [
+      {
+        label: "Clear Local Db",
+        click() {
+          store.clear();
+          win.webContents.send("clear-db-call");
+
+          // win.close();
+        },
+      },
       {
         label: "Quit",
         click() {
@@ -218,7 +228,7 @@ ipcMain.on("delete_playlist", (event, name) => {
 });
 
 ipcMain.on("delete_folder", (event, _path) => {
-  console.log("DELETING...", _path);
+  console.log("CHECK THIS DELETING...", _path);
   let added_folders = store.get("added_folders");
   console.log("prev folders", added_folders);
 
@@ -314,9 +324,19 @@ ipcMain.on("pre_selected", (event, _path) => {
     temp.files = arr;
     temp.path = _path + "/";
 
+
+    console.log("on foder",arr)
+
     win.webContents.send("on-folder-selected", arr);
   });
 });
+
+
+ipcMain.on("close_and_restart",(event)=>{
+
+  win.close()
+
+})
 
 ipcMain.on("add_new_folder", (event, path) => {
   console.log("ipc main add_new_folder");
@@ -335,8 +355,16 @@ ipcMain.on("add_new_folder", (event, path) => {
       let added_folders = store.get("added_folders");
 
       let temp = {};
-      temp.name = _path.substring(_path.lastIndexOf("/") + 1);
-      temp.path = _path;
+      let t1=_path.substring(_path.lastIndexOf("/") + 1)
+      t1=_path.substring(_path.lastIndexOf("\\") + 1)
+
+      temp.name = t1
+
+
+      let n_path=_path.replaceAll("\\","/")
+      console.log("path to be saved",_path,n_path)
+      console.log("T1",t1)
+      temp.path = n_path;
 
       let already_added_paths = [];
       if (Array.isArray(added_folders)) {
@@ -364,11 +392,15 @@ ipcMain.on("add_new_folder", (event, path) => {
             const path = require("path");
 
             if (audio_exts.includes(path.extname(i))) {
+
+              let xtx=data.filePaths[0] + "/" + i
+              xtx=xtx.replaceAll("\\","/")
+              
               let x = {
                 track: index + 1,
                 name: i,
                 duration: "--:--",
-                file: data.filePaths[0] + "/" + i,
+                file: xtx,
               };
 
               arr.push(x);
@@ -379,6 +411,9 @@ ipcMain.on("add_new_folder", (event, path) => {
         let temp = {};
         temp.files = arr;
         temp.path = data.filePaths[0] + "/";
+
+       
+        console.log("on added selected",arr)
         win.webContents.send("on-folder-selected", arr);
       });
     });
