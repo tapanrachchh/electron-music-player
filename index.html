@@ -2,8 +2,85 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Music Player</title>
+    <title>ScoreScout</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="player_style.css" />
+
+    <script>
+      if (typeof module === "object") {
+        window.module = module;
+        module = undefined;
+      }
+    </script>
+
+    <!--for Multi range-->
+    <link rel="stylesheet" href="jquery-ui-1.13.1/jquery-ui.css" />
+    <link rel="stylesheet" href="jquery-ui-1.13.1/style.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="jquery-ui-1.13.1/jquery-ui.js"></script>
+    <script>
+      var rangeA = 0;
+      var rangeB = null;
+
+      $(function () {
+        $("#slider-range").slider({
+          range: true,
+          min: 0,
+          max: 100,
+          values: [0, 100],
+          slide: function (event, ui) {
+            let left = $("#slider-range").slider("values", 0);
+            let right = $("#slider-range").slider("values", 1);
+
+            let prev = $("#main-slide").attr("min");
+
+            if (prev != left) {
+              audioObj.pause();
+              audioObj.currentTime = (left * audioObj.duration) / 100;
+              audioObj.play();
+            }
+
+            $("#main-slide").attr("min", left);
+            $("#main-slide").attr("max", right);
+            rangeA = left;
+
+            if (right < 100) {
+              rangeB = right;
+            }
+
+            $("#main-slide").css({
+              left: $("#slider-range").slider("values", 0) + "%",
+              width:
+                $("#slider-range").slider("values", 1) -
+                $("#slider-range").slider("values", 0) +
+                "%",
+            });
+          },
+        });
+      });
+    </script>
+    <!--for Multi range END-->
+
+    <script>
+      if (window.module) module = window.module;
+    </script>
+
+    <style type="text/css">
+      .ui-slider-horizontal .ui-state-default {
+        /* background: url(images/tri.png) no-repeat scroll 50% 50%; */
+        /* background-size: contain; */
+        background-color: #000;
+        border-radius: 50%;
+        border: none;
+        outline: none;
+      }
+      .ui-slider-range {
+        background: none;
+        z-index: -1 !important;
+        /* height: 33% !important;
+        top: -4px !important; */
+      }
+    </style>
   </head>
 
   <body>
@@ -33,10 +110,15 @@
         <div class="head">Playlists</div>
         <hr class="divider" />
         <div class="content">
-          <ul class="list" id="playList">
-            <!-- <li class="item">Playlist 1</li>
-            <li class="item">Playlist 2</li> -->
+          <ul class="custom_ul">
+            <li class="item" onclick="load_stared()">
+              <span style="display: flex; align-items: center">
+                <img src="images/star_filled.png" width="24px" />
+                Stared &nbsp;
+              </span>
+            </li>
           </ul>
+          <ul class="list" id="playList"></ul>
           <li
             class="item"
             onclick="openModel1()"
@@ -49,22 +131,264 @@
       <!-- end sidebar -->
 
       <div class="container">
+        <input
+          type="text"
+          id="myInput"
+          onkeyup="myFunction()"
+          placeholder="Search for names.."
+          title="Type in a name"
+        />
         <ul class="songs-list" id="songList"></ul>
 
-        <div class="player">
-          <span id="songTitle"> </span>
+        <!-- <div class="player"> -->
+        <!-- <span id="songTitle"> </span> -->
 
-          <div>
-            <audio controls id="audio">
-              <source
-                src="file:///Users/apple/Music/shutterstock/A%20Gentle%20Breeze%20(Gentle,Light,Uplifting).wav"
-                type="audio/wav"
-                id="audioSource"
-              />
-              Your browser does not support the audio element.
+        <!-- <div style="background-color: red">hello</div> -->
+        <div class="player-cover">
+          <div class="custom-audio-player" audio-id="123">
+            <div class="visible-block-outer">
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  width: 100%;
+                  align-items: center;
+                "
+              >
+                <div
+                  class="first-row"
+                  style="
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: space-between;
+                    align-items: center;
+                    width: inherit;
+                  "
+                >
+                  <span></span>
+                  <span class="song-title" id="songTitle"></span>
+                  <span class="outof-text"></span>
+                </div>
+
+                <div
+                  class="first-row"
+                  style="
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: center;
+                    align-items: center;
+                    width: inherit;
+                  "
+                >
+                  <span class="song-subtitle"></span>
+                </div>
+
+                <div class="visible-block">
+                  <button type="button" class="play-bttn"></button>
+                  <div class="p-bar-timing">
+                    <span class="current-time"></span>
+                    <div class="progress-bar">
+                      <div class="watermarks">
+                        <div
+                          id="slider-range"
+                          style="width: 100%; border: none; display: none"
+                        ></div>
+                      </div>
+                      <div
+                        style="
+                          background-color: #aaa;
+                          width: 100%;
+                          height: 80%;
+                          border-radius: 20px;
+                        "
+                        class="bg-slide"
+                      ></div>
+                      <input
+                        type="range"
+                        value="0"
+                        class="range-slider-audio"
+                        min="0"
+                        max="100"
+                        style="position: absolute"
+                        id="main-slide"
+                      />
+                    </div>
+                    <span class="audio-length"></span>
+                  </div>
+                  <div class="right-controls">
+                    <button type="button" class="playback-speed">
+                      <span>x1</span>
+                    </button>
+                    <div class="playback-option">
+                      <input
+                        type="range"
+                        value="25"
+                        class="range-slider-audio-playback"
+                      />
+                    </div>
+
+                    <button type="button" id="shuffle-bttn">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        fill="#aaa"
+                        class="bi bi-shuffle"
+                        viewBox="0 0 16 16"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M0 3.5A.5.5 0 0 1 .5 3H1c2.202 0 3.827 1.24 4.874 2.418.49.552.865 1.102 1.126 1.532.26-.43.636-.98 1.126-1.532C9.173 4.24 10.798 3 13 3v1c-1.798 0-3.173 1.01-4.126 2.082A9.624 9.624 0 0 0 7.556 8a9.624 9.624 0 0 0 1.317 1.918C9.828 10.99 11.204 12 13 12v1c-2.202 0-3.827-1.24-4.874-2.418A10.595 10.595 0 0 1 7 9.05c-.26.43-.636.98-1.126 1.532C4.827 11.76 3.202 13 1 13H.5a.5.5 0 0 1 0-1H1c1.798 0 3.173-1.01 4.126-2.082A9.624 9.624 0 0 0 6.444 8a9.624 9.624 0 0 0-1.317-1.918C4.172 5.01 2.796 4 1 4H.5a.5.5 0 0 1-.5-.5z"
+                        />
+                        <path
+                          d="M13 5.466V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192zm0 9v-3.932a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192z"
+                        />
+                      </svg>
+                    </button>
+
+                    <!-- <button type="button" id="a-b-repeat-bttn">
+                      <svg
+                        version="1.1"
+                        xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink"
+                        x="0px"
+                        y="0px"
+                        viewBox="0 0 1000 1000"
+                        enable-background="new 0 0 1000 1000"
+                        xml:space="preserve"
+                        fill="#aaa"
+                        width="24"
+                        height="24"
+                      >
+                        <g>
+                          <path
+                            d="M500,10C229.8,10,10,229.8,10,500s219.8,490,490,490c270.2,0,490-219.8,490-490C990,229.8,770.2,10,500,10z M500,938.1C258.4,938.1,61.9,741.6,61.9,500C61.9,258.4,258.4,61.9,500,61.9c241.6,0,438.1,196.5,438.1,438.1C938.1,741.6,741.6,938.1,500,938.1z"
+                          />
+                          <path
+                            d="M606.1,572.7H394.3l-49.4,134h-65.3l194.2-503H529l191,503h-65.3L606.1,572.7z M413.3,521.2h174.1L501,282.9L413.3,521.2z"
+                          />
+                        </g>
+                      </svg>
+
+                      <svg
+                        version="1.1"
+                        xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink"
+                        x="0px"
+                        y="0px"
+                        viewBox="0 0 1000 1000"
+                        enable-background="new 0 0 1000 1000"
+                        xml:space="preserve"
+                        fill="#aaa"
+                        width="24"
+                        height="24"
+                      >
+                        <g>
+                          <g
+                            transform="translate(0.000000,511.000000) scale(0.100000,-0.100000)"
+                          >
+                            <path
+                              d="M309.6,453C29.8,313.1,29.8-97,311.5-233l84.3-40.2l4628,3.8l4629.9,5.7l82.4,57.5c218.5,155.2,218.5,477.2,0,632.4l-82.4,57.5l-4629.9,5.7L392,493.3L309.6,453z"
+                            />
+                          </g>
+                        </g>
+                      </svg>
+
+                      <svg
+                        version="1.1"
+                        xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink"
+                        x="0px"
+                        y="0px"
+                        viewBox="0 0 1000 1000"
+                        enable-background="new 0 0 1000 1000"
+                        xml:space="preserve"
+                        fill="#aaa"
+                        width="24"
+                        height="24"
+                      >
+                        <g>
+                          <path
+                            d="M500,10C229.8,10,10,229.8,10,500s219.8,490,490,490c270.2,0,490-219.8,490-490C990,229.8,770.2,10,500,10z M500,938.1C258.4,938.1,61.9,741.6,61.9,500C61.9,258.4,258.4,61.9,500,61.9c241.6,0,438.1,196.5,438.1,438.1C938.1,741.6,741.6,938.1,500,938.1z"
+                          />
+                          <path
+                            d="M353.5,748.7v-503h161.3c53.4,0,94.7,11.1,123.8,33.3c29.1,22.2,43.7,56.4,43.7,102.4c0,23-7,43.3-20.9,60.8c-13.9,17.5-32.3,30.4-55.1,38.7v1c30.2,6.2,53.8,20.8,70.8,43.7c17,22.9,25.6,50,25.6,81.4c0,46.8-14.6,82.1-43.9,105.9c-29.2,23.8-69.8,35.8-121.6,35.8L353.5,748.7L353.5,748.7z M417.4,460.6h114.7c26.5-0.7,47.5-7.9,63.1-21.6c15.5-13.7,23.3-33.3,23.3-58.9c0-28.1-8.7-48.9-26.1-62.4c-17.4-13.5-43.2-20.2-77.6-20.2l-97.4,0V460.6z M417.4,512.1v185.2h119.9c32.5,0,57.5-7.7,75.1-23c17.6-15.3,26.4-37.5,26.4-66.5c0-30.2-7.4-53.7-22.3-70.5c-14.9-16.8-38.1-25.2-69.6-25.2H417.4z"
+                          />
+                        </g>
+                      </svg>
+                    </button> -->
+                    <button type="button" id="repeat-bttn">
+                      <svg
+                        version="1.1"
+                        xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink"
+                        x="0px"
+                        y="0px"
+                        viewBox="0 0 1000 1000"
+                        enable-background="new 0 0 1000 1000"
+                        xml:space="preserve"
+                        fill="#aaa"
+                        width="24"
+                        height="24"
+                      >
+                        <metadata>
+                          Svg Vector Icons : http://www.onlinewebfonts.com/icon
+                        </metadata>
+                        <g>
+                          <g
+                            transform="translate(0.000000,511.000000) scale(0.100000,-0.100000)"
+                          >
+                            <path
+                              d="M6894.8,3722.8v-744.6l-1853.6-10.6c-2037.1-10.6-1962.7-5.3-2494.5-180.8C1642.5,2486.2,903.1,1837.3,459,957C328.7,693.8,211.7,348,147.9,31.5c-63.8-324.5-63.8-1023.9,
+                          0-1345.7c258-1297.8,1172.8-2345.6,2401.5-2755.2c529.2-175.5,513.3-175.5,2390.8-175.5s1877.5,0,2414.8,175.5c920.2,300.5,1747.3,1015.9,2188.7,1893.5C9743.1-1782.2,9900-1173.2,
+                          9900-792.9v151.6h-635.6h-632.9l-15.9-204.8c-71.8-928.1-837.7-1789.8-1832.4-2061.1c-218.1-61.2-236.7-61.2-1843-61.2c-1595.7,0-1624.9,0-1829.7,58.5c-797.8,226.1-1412.1,
+                          837.7-1659.5,1648.8c-61.2,207.4-69.1,276.6-69.1,619.6s8,412.2,69.1,619.6c247.4,811.1,861.7,1422.8,1659.5,1646.2c202.1,58.5,244.7,61.2,1997.2,69.1l1787.1,
+                          8V954.4V209.7l1263.2,1053.1c694.1,579.8,1263.2,1061.1,1263.2,1074.4c0,13.3-569.1,494.7-1263.2,1074.4L6894.8,4464.8V3722.8z"
+                            />
+                            <path
+                              d="M4937.5,749.6c-23.9-130.3-47.9-175.5-164.9-305.8c-125-138.3-263.3-226-393.6-247.3c-273.9-45.2-250-23.9-250-228.7v-183.5h319.1h319.1v-1063.8v
+                          -1063.8h319.1h319.1v1595.7V848h-226h-223.4L4937.5,749.6z"
+                              visibility="hidden"
+                              id="repeat-number"
+                            />
+                          </g>
+                        </g>
+                      </svg>
+                    </button>
+
+                    <button type="button" class="sound-bttn">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          class="speaker"
+                          fill="#566574"
+                          fill-rule="evenodd"
+                          d="M14.667 0v2.747c3.853 1.146 6.666 4.72 6.666 8.946 0 4.227-2.813 7.787-6.666 8.934v2.76C20 22.173 24 17.4 24 11.693 24 5.987 20 1.213 14.667 0zM18 11.693c0-2.36-1.333-4.386-3.333-5.373v10.707c2-.947 3.333-2.987 3.333-5.334zm-18-4v8h5.333L12 22.36V1.027L5.333 7.693H0z"
+                        />
+                      </svg>
+                    </button>
+
+                    <div class="sound-option">
+                      <input
+                        type="range"
+                        value="100"
+                        class="range-slider-audio-sound"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <audio class="audioObj" id="audio">
+              <source  type="audio/wav" id="audioSource" />
             </audio>
           </div>
         </div>
+        <!-- </div> -->
       </div>
     </div>
     <!-- The Modal -->
@@ -97,13 +421,11 @@
           >
 
           <input type="text" id="playlistInput" />
-        </div>  
+        </div>
 
         <br /><br />
         <button onclick="create_new_playlist()">Create New Playlist</button>
       </div>
-
-
     </div>
 
     <!-- The Modal -->
@@ -115,9 +437,7 @@
           <label for="nothing" style="color: white"
             >Local Database Cleared! &nbsp;</label
           >
-
-
-        </div>        
+        </div>
 
         <br /><br />
         <button onclick="close_and_restart()">Quit App</button>
@@ -125,5 +445,6 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="player_script.js"></script>
   </body>
 </html>

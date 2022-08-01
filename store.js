@@ -10,7 +10,7 @@ class Store {
       "userData"
     );
     // We'll use the `configName` property to set the file name and path.join to bring it all together as a string
-    console.log("PATH",userDataPath)
+    console.log("PATH", userDataPath);
     this.path = path.join(userDataPath, opts.configName + ".json");
 
     this.data = parseDataFile(this.path, opts.defaults);
@@ -20,17 +20,21 @@ class Store {
   get(key) {
     if (Array.isArray(this.data[key])) {
       return this.data[key];
+    } else {
+      if (typeof this.data === "object") {
+        return this.data[key];
+      } else {
+        return [];
+      }
     }
-    return [];
-
   }
 
   clear() {
-  
-    console.log("clearing...",this.path)
-    fs.writeFileSync(this.path, '', function(){console.log('done')});
+    console.log("clearing...", this.path);
+    fs.writeFileSync(this.path, "", function () {
+      console.log("done");
+    });
   }
-
 
   // ...and this will set it
   set(key, val) {

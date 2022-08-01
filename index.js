@@ -1,8 +1,25 @@
-const { app, BrowserWindow, Menu, MenuItem } = require("electron");
+const { app, BrowserWindow, Menu, MenuItem, remote } = require("electron");
 const path = require("path");
 const { ipcMain } = require("electron");
 const { dialog } = require("electron");
+const mm = require("music-metadata");
+const util = require("util");
+const moment = require("moment");
 const Store = require("./store.js");
+// const contextMenu = require("electron-context-menu");
+
+// contextMenu({
+//   prepend: (defaultActions, parameters, browserWindow) => [
+//     {
+//       label: "Refresh",
+//       // Only show it when right-clicking images
+//       visible: true,
+//       click: () => {
+//         console.log("context click refresh", parameters);
+//       },
+//     },
+//   ],
+// });
 
 const store = new Store({
   configName: "user-preferences",
@@ -10,6 +27,10 @@ const store = new Store({
     favorites: { width: 800, height: 600 },
     added_folders: [],
     playlists: [],
+    player: {
+      repeat: false,
+      shuffle: false,
+    },
   },
 });
 
@@ -17,28 +38,35 @@ var playlists = [];
 
 const fs = require("fs");
 var win;
+
 function createWindow() {
   win = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
       contextIsolation: false,
       enableRemoteModule: true,
       nodeIntegration: true,
     },
-    icon:"images/logo.png"
+    show: false,
+    icon: "images/logo.png",
   });
+
+  win.once("ready-to-show", () => {
+    win.show();
+  });
+
   // win.webContents.openDevTools();
 
-  // win.maximize();
+  win.maximize();
   win.loadFile("index.html");
 
   let added_folders = store.get("added_folders");
   playlists = store.get("playlists");
-
+  let player = store.get("player");
   win.webContents.on("did-finish-load", function () {
-    console.log("did finish");
+    console.log("did finish", player);
+    win.webContents.send("on-loaded-player-settings", player);
     win.webContents.send("on-loaded", added_folders);
     win.webContents.send("on-loaded-playlists", playlists);
   });
@@ -104,7 +132,8 @@ const template = [
                 let temp = {};
                 temp.files = arr;
                 temp.path = data.filePaths[0] + "/";
-                win.webContents.send("on-folder-selected", arr);
+
+                pre_send(arr);
               });
             });
         },
@@ -115,6 +144,86 @@ const template = [
 
 const menu = Menu.buildFromTemplate(template);
 Menu.setApplicationMenu(menu);
+
+ipcMain.on("show-context-menu", (event, _path) => {
+  // console.log("event con", data, win);
+
+  const context_menu = new Menu();
+  context_menu.append(
+    new MenuItem(
+      new MenuItem({
+        label: "Refresh",
+        click: async function () {
+          console.log("Refesh this", _path);
+
+          let cached = store.get("cached");
+          console.log("cacged IS", cached);
+          if (false) {
+            console.log("_path yes");
+          } else {
+            console.log("_path no");
+            let arr = [];
+            //NOT IN CACHE
+            console.log("no in cache");
+
+            fs.readdir(_path, async (err, files) => {
+              console.log("reading files", files);
+
+              await Promise.all(
+                files.map(async (i, index) => {
+                  let audio_exts = [".mp3", ".wav"];
+                  const path = require("path");
+
+                  if (audio_exts.includes(path.extname(i))) {
+                    let info = await get_info(_path + "/" + i);
+
+                    // console.log("info is", info);
+
+                    let x = {
+                      track: index + 1,
+                      name: i,
+                      duration: info.duration,
+                      file: _path + "/" + i,
+                    };
+
+                    arr.push(x);
+                  }
+                })
+              );
+              test = _path + "/" + arr[0];
+              let temp = {};
+              temp.files = arr;
+              temp.path = _path + "/";
+
+              // console.log("on foder", arr);
+
+              let c_temp = {};
+              if (typeof cached === "object") {
+                c_temp = cached;
+              }
+              c_temp[_path] = arr;
+              // console.log("saving cache", c_temp);
+              store.set("cached", c_temp);
+
+              pre_send(arr);
+            });
+          }
+        },
+      })
+    )
+  );
+
+  // menu.append(
+  //   new MenuItem({
+  //     label: "This menu is not always shown",
+  //     click: function () {
+  //       alert(`you clicked on ${e.target.id}`);
+  //     },
+  //   })
+  // );
+
+  context_menu.popup({ win });
+});
 
 ipcMain.on("remove_from_playlist", async (event, data) => {
   console.log("file path to add playlist", data);
@@ -262,7 +371,45 @@ async function get_songs(name) {
   return r;
 }
 
-function load_songs(arg, arg2) {
+async function pre_send(arg) {
+  console.log("pre send");
+  let stared = store.get("stared");
+
+  if (stared) {
+    await Promise.all(
+      arg.map(async (i, index) => {
+        if (stared.includes(i.file)) {
+          i.isStared = true;
+        } else {
+          i.isStared = false;
+        }
+      })
+    );
+  }
+
+  console.log("check presend", arg);
+  win.webContents.send("on-folder-selected", arg);
+}
+
+async function get_info(file_path) {
+  // console.log("Getting song info for", file_path);
+
+  try {
+    const metadata = await mm.parseFile(file_path);
+    console.log(util.inspect(metadata, { showHidden: false, depth: null }));
+    let duration_in_seconds = metadata.format.duration;
+    console.log(duration_in_seconds);
+    const formatted = moment.utc(duration_in_seconds * 1000).format("mm:ss");
+    // console.log("formatted duration", formatted);
+    let temp = {};
+    temp.duration = formatted;
+    return temp;
+  } catch (error) {
+    console.error(error.message);
+  }
+}
+
+function load_songs(arg, arg2, arg3 = false) {
   let arr = [];
   console.log("LOADING SONGS", arg);
   arg.map(async (i, index) => {
@@ -283,7 +430,8 @@ function load_songs(arg, arg2) {
   });
 
   console.log("SENING", arr);
-  win.webContents.send("on-playlist-loaded", [arr, arg2]);
+  console.log("arg3", arg3);
+  win.webContents.send("on-playlist-loaded", [arr, arg2, arg3]);
 }
 
 ipcMain.on("load_playlist", async (event, name) => {
@@ -294,49 +442,123 @@ ipcMain.on("load_playlist", async (event, name) => {
   load_songs(songs, name);
 });
 
+ipcMain.on("load_stared", async (event) => {
+  console.log("loading stared songs ");
+
+  let stared = store.get("stared");
+
+  let songs = stared;
+  console.log("Stared songs", songs);
+  load_songs(songs, "Stared", true);
+});
+
 ipcMain.on("pre_selected", (event, _path) => {
   console.log("ipc pre selected");
 
   let arr = [];
 
   fs.readdir(_path, async (err, files) => {
-    console.log("path",_path)
-    console.log("files",files)
-    await Promise.all(
-      files.map(async (i, index) => {
-        let audio_exts = [".mp3", ".wav"];
-        const path = require("path");
+    console.log("cache check1");
+    console.log("path", _path);
+    console.log("files", files);
 
-        if (audio_exts.includes(path.extname(i))) {
-          let x = {
-            track: index + 1,
-            name: i,
-            duration: "--:--",
-            file: _path + "/" + i,
-          };
+    let cached = store.get("cached");
 
-          arr.push(x);
-        }
-      })
-    );
-    test = _path + "/" + arr[0];
-    let temp = {};
-    temp.files = arr;
-    temp.path = _path + "/";
+    console.log("cacged IS", cached);
+    if (cached && _path in cached) {
+      console.log("cache inc");
 
+      pre_send(cached[_path]);
 
-    console.log("on foder",arr)
+      console.log("sent from cache");
 
-    win.webContents.send("on-folder-selected", arr);
+      return;
+    } else {
+      //NOT IN CACHE
+      console.log("no in cache");
+
+      await Promise.all(
+        files.map(async (i, index) => {
+          let audio_exts = [".mp3", ".wav"];
+          const path = require("path");
+
+          if (audio_exts.includes(path.extname(i))) {
+            let info = await get_info(_path + "/" + i);
+
+            console.log("info is", info);
+
+            let x = {
+              track: index + 1,
+              name: i,
+              duration: info.duration,
+              file: _path + "/" + i,
+            };
+
+            arr.push(x);
+          }
+        })
+      );
+      test = _path + "/" + arr[0];
+      let temp = {};
+      temp.files = arr;
+      temp.path = _path + "/";
+
+      console.log("on foder", arr);
+
+      // let c_arr = [];
+      let c_temp = {};
+      if (typeof cached === "object") {
+        c_temp = cached;
+      }
+      c_temp[_path] = arr;
+
+      // c_arr.push(c_temp);
+      console.log("saving cache", c_temp);
+      store.set("cached", c_temp);
+
+      pre_send(arr);
+    }
   });
 });
 
+ipcMain.on("player_changes", (event, data) => {
+  console.log("player change", data);
 
-ipcMain.on("close_and_restart",(event)=>{
+  player = store.get("player");
 
-  win.close()
+  if (!player) {
+    player = {};
+  }
 
-})
+  player[data.prop] = data.value;
+
+  console.log("now player setts", player);
+  store.set("player", player);
+});
+
+ipcMain.on("close_and_restart", (event) => {
+  win.close();
+});
+
+ipcMain.on("star_file", (event, path) => {
+  console.log("staring", path);
+
+  stared = store.get("stared");
+  let temp = [];
+
+
+
+  if (Array.isArray(stared) && stared.length > 0) {
+    console.log("found stared", stared);
+    temp = stared;
+  }
+
+  let idx = temp.indexOf(path);
+  idx === -1 ? temp.push(path) : temp.splice(idx, 1);
+
+  console.log("stared", temp);
+  store.set("stared", temp);
+});
 
 ipcMain.on("add_new_folder", (event, path) => {
   console.log("ipc main add_new_folder");
@@ -355,15 +577,14 @@ ipcMain.on("add_new_folder", (event, path) => {
       let added_folders = store.get("added_folders");
 
       let temp = {};
-      let t1=_path.substring(_path.lastIndexOf("/") + 1)
-      t1=_path.substring(_path.lastIndexOf("\\") + 1)
+      let t1 = _path.substring(_path.lastIndexOf("/") + 1);
+      t1 = _path.substring(_path.lastIndexOf("\\") + 1);
 
-      temp.name = t1
+      temp.name = t1;
 
-
-      let n_path=_path.replaceAll("\\","/")
-      console.log("path to be saved",_path,n_path)
-      console.log("T1",t1)
+      let n_path = _path.replaceAll("\\", "/");
+      console.log("path to be saved", _path, n_path);
+      console.log("T1", t1);
       temp.path = n_path;
 
       let already_added_paths = [];
@@ -392,10 +613,9 @@ ipcMain.on("add_new_folder", (event, path) => {
             const path = require("path");
 
             if (audio_exts.includes(path.extname(i))) {
+              let xtx = data.filePaths[0] + "/" + i;
+              xtx = xtx.replaceAll("\\", "/");
 
-              let xtx=data.filePaths[0] + "/" + i
-              xtx=xtx.replaceAll("\\","/")
-              
               let x = {
                 track: index + 1,
                 name: i,
@@ -412,9 +632,9 @@ ipcMain.on("add_new_folder", (event, path) => {
         temp.files = arr;
         temp.path = data.filePaths[0] + "/";
 
-       
-        console.log("on added selected",arr)
-        win.webContents.send("on-folder-selected", arr);
+        console.log("on added selected", arr);
+
+        pre_send(arr);
       });
     });
 });

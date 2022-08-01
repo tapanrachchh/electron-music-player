@@ -1,7 +1,7 @@
 {
   "name": "music-electron",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.2.0",
+  "description": "Music Player for FilmMakers",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -17,15 +17,21 @@
     "electron-packager": "^15.4.0"
   },
   "dependencies": {
-    "@electron/remote": "^2.0.4"
+    "@electron/remote": "^2.0.4",
+    "electron-context-menu": "^3.1.2",
+    "moment": "^2.29.3",
+    "music-metadata": "^7.12.3"
   },
-  "productName": "Music Player",
-  "appVersion": "1.0.0",
+  "productName": "ScoreScout",
+  "appVersion": "1.2.0",
   "build": {
-    "appId": "music-player-electron",
+    "appId": "score-scout-electron",
     "mac": {
       "category": "your.app.category.type",
       "icon": "images/logo.icns"
+    },
+    "win": {
+      "icon": "images/logo.ico"
     }
   }
 }
