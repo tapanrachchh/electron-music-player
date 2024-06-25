@@ -26,6 +26,18 @@
     "mac": {
       "category": "your.app.category.type",
       "icon": "images/logo.icns"
-    }
+    },
+    "fileAssociations": [
+      {
+        "ext": [
+          "mp3",
+          "wav",
+          "ogg"
+        ],
+        "name": "Audio File",
+        "role": "Editor",
+        "description": "Audio files"
+      }
+    ]
   }
 }

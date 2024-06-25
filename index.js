@@ -27,7 +27,7 @@ function createWindow() {
       enableRemoteModule: true,
       nodeIntegration: true,
     },
-    icon:"images/logo.png"
+    icon: "images/logo.png",
   });
   // win.webContents.openDevTools();
 
@@ -41,6 +41,11 @@ function createWindow() {
     console.log("did finish");
     win.webContents.send("on-loaded", added_folders);
     win.webContents.send("on-loaded-playlists", playlists);
+
+    if (process.platform.startsWith("win") && process.argv.length >= 2) {
+      const filePath = process.argv[1];
+      win.webContents.send("open-file", filePath);
+    }
   });
 }
 
@@ -300,8 +305,6 @@ ipcMain.on("pre_selected", (event, _path) => {
   let arr = [];
 
   fs.readdir(_path, async (err, files) => {
-    console.log("path",_path)
-    console.log("files",files)
     await Promise.all(
       files.map(async (i, index) => {
         let audio_exts = [".mp3", ".wav"];
@@ -324,19 +327,13 @@ ipcMain.on("pre_selected", (event, _path) => {
     temp.files = arr;
     temp.path = _path + "/";
 
-
-    console.log("on foder",arr)
-
     win.webContents.send("on-folder-selected", arr);
   });
 });
 
-
-ipcMain.on("close_and_restart",(event)=>{
-
-  win.close()
-
-})
+ipcMain.on("close_and_restart", (event) => {
+  win.close();
+});
 
 ipcMain.on("add_new_folder", (event, path) => {
   console.log("ipc main add_new_folder");
@@ -355,15 +352,12 @@ ipcMain.on("add_new_folder", (event, path) => {
       let added_folders = store.get("added_folders");
 
       let temp = {};
-      let t1=_path.substring(_path.lastIndexOf("/") + 1)
-      t1=_path.substring(_path.lastIndexOf("\\") + 1)
+      let t1 = _path.substring(_path.lastIndexOf("/") + 1);
+      t1 = _path.substring(_path.lastIndexOf("\\") + 1);
 
-      temp.name = t1
+      temp.name = t1;
 
-
-      let n_path=_path.replaceAll("\\","/")
-      console.log("path to be saved",_path,n_path)
-      console.log("T1",t1)
+      let n_path = _path.replaceAll("\\", "/");
       temp.path = n_path;
 
       let already_added_paths = [];
@@ -392,10 +386,9 @@ ipcMain.on("add_new_folder", (event, path) => {
             const path = require("path");
 
             if (audio_exts.includes(path.extname(i))) {
+              let xtx = data.filePaths[0] + "/" + i;
+              xtx = xtx.replaceAll("\\", "/");
 
-              let xtx=data.filePaths[0] + "/" + i
-              xtx=xtx.replaceAll("\\","/")
-              
               let x = {
                 track: index + 1,
                 name: i,
@@ -412,20 +405,12 @@ ipcMain.on("add_new_folder", (event, path) => {
         temp.files = arr;
         temp.path = data.filePaths[0] + "/";
 
-       
-        console.log("on added selected",arr)
         win.webContents.send("on-folder-selected", arr);
       });
     });
 });
 app.whenReady().then(() => {
   createWindow();
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
 });
 
 app.on("window-all-closed", () => {

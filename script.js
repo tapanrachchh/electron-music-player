@@ -31,10 +31,9 @@ function create_new_playlist() {
 }
 
 function close_and_restart() {
-
   modal2.style.display = "none";
 
-  ipcRenderer.send("close_and_restart",null);
+  ipcRenderer.send("close_and_restart", null);
 }
 
 function openModel(event, path) {
@@ -45,7 +44,6 @@ function openModel(event, path) {
 function openModel1(path) {
   modal1.style.display = "block";
 }
-
 
 function openModel2(path) {
   modal2.style.display = "block";
@@ -79,7 +77,7 @@ function delete_folder(event, path) {
 }
 
 function delete_playlist(event, name) {
-  console.log("del pl name",name)
+  console.log("del pl name", name);
   event.stopPropagation();
   ipcRenderer.send("delete_playlist", name);
 }
@@ -139,9 +137,8 @@ ipcRenderer.on("on-loaded", function (evt, data) {
     .join("");
 });
 
-
 ipcRenderer.on("clear-db-call", function (evt, data) {
- openModel2()
+  openModel2();
 });
 
 ipcRenderer.on("on-playlist-loaded", function (evt, data) {
@@ -169,6 +166,11 @@ ipcRenderer.on("on-folder-selected", function (evt, data) {
         </span></li>`
     )
     .join("");
+});
+
+ipcRenderer.on("open-file", function (evt, filePath) {
+  const name = filePath.substring(filePath.lastIndexOf("\\") + 1);
+  onSongClick(name, filePath);
 });
 
 function onSongClick(name, path) {
@@ -209,7 +211,7 @@ function add_to_playlist(event) {
 }
 
 function load_folder(path) {
-  console.log("check load_folder path",path)
+  console.log("check load_folder path", path);
   ipcRenderer.send("pre_selected", path);
 }
 
