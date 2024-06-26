@@ -1,26 +1,15 @@
 const { ipcRenderer } = require("electron");
-const electron = require("electron");
 var toBeAdded = false;
 
-// Get the modal
 var modal = document.getElementById("myModal");
 var modal1 = document.getElementById("myModal1");
 var modal2 = document.getElementById("myModal2");
 
-// Get the button that opens the modal
 var btn = document.getElementsByClassName("myBtn");
 
-// Get the <span> element that closes the modal
 var span = document.getElementsByClassName("close")[0];
 var span1 = document.getElementsByClassName("close")[1];
 var span2 = document.getElementsByClassName("close")[2];
-
-// When the user clicks the button, open the modal
-// btn.onclick = function (event) {
-//   event.stopPropagation();
-//   console.log("1111");
-//   modal.style.display = "block";
-// };
 
 function create_new_playlist() {
   var input = document.getElementById("playlistInput");
@@ -49,7 +38,6 @@ function openModel2(path) {
   modal2.style.display = "block";
 }
 
-// When the user clicks on <span> (x), close the modal
 span.onclick = function () {
   modal.style.display = "none";
 };
@@ -62,7 +50,6 @@ span2.onclick = function () {
   modal2.style.display = "none";
 };
 
-// When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
   if (event.target == modal) {
     modal.style.display = "none";
@@ -72,19 +59,14 @@ window.onclick = function (event) {
 function delete_folder(event, path) {
   event.stopPropagation();
   ipcRenderer.send("delete_folder", path);
-
-  console.log("deleting folder 123", path);
 }
 
 function delete_playlist(event, name) {
-  console.log("del pl name", name);
   event.stopPropagation();
   ipcRenderer.send("delete_playlist", name);
 }
 
 ipcRenderer.on("on-loaded-playlists", function (evt, data) {
-  console.log("LOADED PLAYLIST", data);
-
   const playList = document.getElementById("playList");
   playList.innerHTML = data
     .map(
@@ -110,7 +92,6 @@ ipcRenderer.on("on-loaded-playlists", function (evt, data) {
   str += `<option value='Choose Playlist...'>  Choose Playlist... </option>`;
 
   for (var item of data) {
-    console.log(item);
     str += `<option value='${item.name}'>  ${item.name} </option>`;
   }
 
@@ -119,8 +100,6 @@ ipcRenderer.on("on-loaded-playlists", function (evt, data) {
 });
 
 ipcRenderer.on("on-loaded", function (evt, data) {
-  console.log("LOADED Data", data);
-
   const folderList = document.getElementById("folderList");
   folderList.innerHTML = data
     .map(
@@ -177,7 +156,6 @@ function onSongClick(name, path) {
   const title = document.getElementById("songTitle");
   title.innerHTML = name;
 
-  console.log("clicked ", path);
   var audio = document.getElementById("audio");
   var source = document.getElementById("audioSource");
   source.src = "file://" + path;
@@ -187,7 +165,6 @@ function onSongClick(name, path) {
 
 function removeFromPlaylist(event, playlist_name, song) {
   event.stopPropagation();
-  console.log("removing from playlist", playlist_name, song);
 
   let temp = {};
   temp.song_name = song;
@@ -199,8 +176,6 @@ function removeFromPlaylist(event, playlist_name, song) {
 function add_to_playlist(event) {
   const select = document.getElementById("selectList");
 
-  console.log("adding to playlist", select.value, toBeAdded);
-
   let temp = {};
   temp.song_name = toBeAdded;
   temp.playlist_name = select.value;
@@ -211,7 +186,6 @@ function add_to_playlist(event) {
 }
 
 function load_folder(path) {
-  console.log("check load_folder path", path);
   ipcRenderer.send("pre_selected", path);
 }
 
@@ -220,17 +194,12 @@ function load_playlist(name) {
 }
 
 function add_new_folder() {
-  console.log("add_new_folder called");
   ipcRenderer.send("add_new_folder", "helloworld");
 }
 
 function add_new_playlist() {
-  console.log("add new playlist called");
-
   ipcRenderer.send("add_new_playlist", true);
 }
-
-// Custom Select Code sourced from https://www.w3schools.com/
 
 function selectFunc() {
   const elements = document.getElementsByClassName("select-selected");

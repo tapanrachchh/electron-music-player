@@ -30,7 +30,6 @@ function createWindow() {
     icon: "images/logo.png",
   });
   // win.webContents.openDevTools();
-
   // win.maximize();
   win.loadFile("index.html");
 
@@ -38,7 +37,6 @@ function createWindow() {
   playlists = store.get("playlists");
 
   win.webContents.on("did-finish-load", function () {
-    console.log("did finish");
     win.webContents.send("on-loaded", added_folders);
     win.webContents.send("on-loaded-playlists", playlists);
 
@@ -58,8 +56,6 @@ const template = [
         click() {
           store.clear();
           win.webContents.send("clear-db-call");
-
-          // win.close();
         },
       },
       {
@@ -79,8 +75,6 @@ const template = [
         click() {
           let { width, height } = store.get("windowBounds");
 
-          console.log("udata", width, height);
-
           store.set("windowBounds", { width: 20, height: 50 });
 
           dialog
@@ -88,8 +82,6 @@ const template = [
               properties: ["openDirectory"],
             })
             .then(async (data) => {
-              console.log(data.filePaths);
-
               let arr = [];
 
               fs.readdir(data.filePaths[0], async (err, files) => {
@@ -122,8 +114,6 @@ const menu = Menu.buildFromTemplate(template);
 Menu.setApplicationMenu(menu);
 
 ipcMain.on("remove_from_playlist", async (event, data) => {
-  console.log("file path to add playlist", data);
-
   playlists = store.get("playlists");
 
   let prev_songs = [];
@@ -158,13 +148,10 @@ ipcMain.on("remove_from_playlist", async (event, data) => {
 
   store.set("playlists", playlists);
 
-  console.log("songs in playlist now...", prev_songs, playlists);
   win.webContents.send("on-playlist-loaded", [xx, data.playlist_name]);
 });
 
 ipcMain.on("add_to_playlist", (event, data) => {
-  console.log("file path to add playlist", data);
-
   playlists = store.get("playlists");
 
   let prev_songs = [];
@@ -177,28 +164,15 @@ ipcMain.on("add_to_playlist", (event, data) => {
 
   if (!prev_songs.includes(data.song_name)) {
     prev_songs.push(data.song_name);
-
-    // playlists.forEach((each) => {
-    //   console.log("eaching..", each);
-    //   if (each.name == data.playlist_name) {
-    //     each.songs = prev_songs;
-    //   }
-    // });
   }
 
   store.set("playlists", playlists);
-
-  console.log("songs in playlist now...", prev_songs, playlists);
 });
 
 ipcMain.on("add_new_playlist", (event, r) => {
   if (!r) {
-    console.log("user cancelled");
   } else {
-    console.log("result", r);
-
     playlists = store.get("playlists");
-    console.log("playlists", playlists);
 
     let temp = {};
     temp.name = r;
@@ -220,7 +194,6 @@ ipcMain.on("add_new_playlist", (event, r) => {
 });
 
 ipcMain.on("delete_playlist", (event, name) => {
-  console.log("DELETING...", name);
   playlists = store.get("playlists");
 
   playlists.forEach((each, index) => {
@@ -233,20 +206,15 @@ ipcMain.on("delete_playlist", (event, name) => {
 });
 
 ipcMain.on("delete_folder", (event, _path) => {
-  console.log("CHECK THIS DELETING...", _path);
   let added_folders = store.get("added_folders");
-  console.log("prev folders", added_folders);
 
   if (Array.isArray(added_folders)) {
     added_folders.forEach((element, index) => {
-      console.log("DELETING...", element.path, _path);
-
       if (element.path == _path) {
         added_folders.splice(index, 1);
       }
     });
   }
-  console.log("DELETED", added_folders);
 
   store.set("added_folders", added_folders);
   win.webContents.send("on-loaded", added_folders);
@@ -257,19 +225,17 @@ async function get_songs(name) {
   await Promise.all(
     playlists.map((each) => {
       if (each.name == name) {
-        console.log("MATCH", each);
         r = each.songs;
       }
     })
   );
 
-  console.log("r", r);
   return r;
 }
 
 function load_songs(arg, arg2) {
   let arr = [];
-  console.log("LOADING SONGS", arg);
+
   arg.map(async (i, index) => {
     let audio_exts = [".mp3", ".wav"];
     const path = require("path");
@@ -287,21 +253,16 @@ function load_songs(arg, arg2) {
     }
   });
 
-  console.log("SENING", arr);
   win.webContents.send("on-playlist-loaded", [arr, arg2]);
 }
 
 ipcMain.on("load_playlist", async (event, name) => {
-  console.log("loading pre playlist ", name, playlists);
-
   let songs = await get_songs(name);
-  console.log("SONGS", songs);
+
   load_songs(songs, name);
 });
 
 ipcMain.on("pre_selected", (event, _path) => {
-  console.log("ipc pre selected");
-
   let arr = [];
 
   fs.readdir(_path, async (err, files) => {
@@ -336,8 +297,6 @@ ipcMain.on("close_and_restart", (event) => {
 });
 
 ipcMain.on("add_new_folder", (event, path) => {
-  console.log("ipc main add_new_folder");
-
   dialog
     .showOpenDialog(BrowserWindow.getFocusedWindow(), {
       properties: ["openDirectory"],
