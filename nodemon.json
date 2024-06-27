@@ -1,0 +1,5 @@
+{
+  "watch": ["index.js", "renderer.js", "index.html"],
+  "ignore": ["node_modules"],
+  "exec": "electron ."
+}

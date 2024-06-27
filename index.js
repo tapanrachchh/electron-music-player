@@ -4,6 +4,12 @@ const { ipcMain } = require("electron");
 const { dialog } = require("electron");
 const Store = require("./store.js");
 
+// Enable live reload for Electron too
+require("electron-reload")(__dirname, {
+  // Note that the path to electron may vary according to the main file of your application.
+  electron: require(`${__dirname}/node_modules/electron`),
+});
+
 const store = new Store({
   configName: "user-preferences",
   defaults: {
