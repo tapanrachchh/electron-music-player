@@ -35,7 +35,7 @@ function createWindow() {
     },
     icon: "images/logo.png",
   });
-  // win.webContents.openDevTools();
+  win.webContents.openDevTools();
   // win.maximize();
   win.loadFile("index.html");
 
@@ -239,6 +239,11 @@ async function get_songs(name) {
   return r;
 }
 
+ipcMain.on("duration-output", (event, data) => {
+  // TODO: Add cache
+  win.webContents.send("on-folder-selected", data);
+});
+
 function load_songs(arg, arg2) {
   let arr = [];
 
@@ -370,7 +375,7 @@ ipcMain.on("add_new_folder", (event, path) => {
         temp.files = arr;
         temp.path = data.filePaths[0] + "/";
 
-        win.webContents.send("on-folder-selected", arr);
+        win.webContents.send("get-duration", arr);
       });
     });
 });

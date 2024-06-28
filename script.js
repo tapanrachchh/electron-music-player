@@ -66,6 +66,23 @@ function delete_playlist(event, name) {
   ipcRenderer.send("delete_playlist", name);
 }
 
+function secondsToMinutesAndSeconds(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  const formattedMinutes = String(minutes).padStart(2, "0");
+  const formattedSeconds = String(secs).padStart(2, "0");
+  return `${formattedMinutes}:${Math.round(formattedSeconds)}`;
+}
+
+ipcRenderer.on("get-duration", async function (evt, data) {
+  for (const file of data) {
+    try {
+      file.duration = secondsToMinutesAndSeconds(await getDuration(file.file));
+    } catch (error) {}
+  }
+  ipcRenderer.send("duration-output", data);
+});
+
 ipcRenderer.on("on-loaded-playlists", function (evt, data) {
   const playList = document.getElementById("playList");
   playList.innerHTML = data
@@ -137,7 +154,7 @@ ipcRenderer.on("on-folder-selected", function (evt, data) {
   list.innerHTML = data
     .map(
       (i) =>
-        `<li class="song-item" onclick="onSongClick('${i.name}','${i.file}')">${i.name}  <span class="myBtn" onclick="openModel(event,'${i.file}')"
+        `<li class="song-item" onclick="onSongClick('${i.name}','${i.file}')">${i.name} (${i.duration})  <span class="myBtn" onclick="openModel(event,'${i.file}')"
         
         style="display:flex"
         >
@@ -161,6 +178,20 @@ function onSongClick(name, path) {
   source.src = "file://" + path;
   audio.load();
   audio.play();
+}
+
+function getDuration(filePath) {
+  return new Promise((resolve, reject) => {
+    const audio = new Audio("file://" + filePath);
+
+    audio.addEventListener("loadedmetadata", () => {
+      resolve(audio.duration);
+    });
+
+    audio.addEventListener("error", (e) => {
+      reject(new Error("Failed to load audio"));
+    });
+  });
 }
 
 function removeFromPlaylist(event, playlist_name, song) {
