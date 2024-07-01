@@ -11,6 +11,9 @@ var span = document.getElementsByClassName("close")[0];
 var span1 = document.getElementsByClassName("close")[1];
 var span2 = document.getElementsByClassName("close")[2];
 
+var currentlyPlaying = null;
+var folderData = [];
+
 function create_new_playlist() {
   var input = document.getElementById("playlistInput");
 
@@ -96,12 +99,9 @@ ipcRenderer.on("on-loaded-playlists", function (evt, data) {
         <span></span>
         <span style="display:flex;align-items:center">
         <img src="images/note.png" width="16px" style="margin-right:5px"/> ${each.name}  &nbsp;
-        </span>
-
-        
-        
-        
-        <span onclick="delete_playlist(event,'${each.name}')"><img src="images/bin.png" width="16px"/></span></li>  `
+        </span>                        
+        <span onclick="delete_playlist(event,'${each.name}')"><img src="images/bin.png" width="16px"/></span>                
+        </li>  `
     )
     .join("");
 
@@ -150,24 +150,34 @@ ipcRenderer.on("on-playlist-loaded", function (evt, data) {
 });
 
 ipcRenderer.on("on-folder-selected", function (evt, data) {
-  const list = document.getElementById("songList");
-  list.innerHTML = data
-    .map(
-      (i) =>
-        `<li class="song-item" onclick="onSongClick('${i.name}','${i.file}')">${i.name} (${i.duration})  <span class="myBtn" onclick="openModel(event,'${i.file}')"
-        
-        style="display:flex"
-        >
-        <img src="images/add.png" width="22px" />
-        </span></li>`
-    )
-    .join("");
+  folderData = data;
+  renderSongs();
 });
 
 ipcRenderer.on("open-file", function (evt, filePath) {
   const name = filePath.substring(filePath.lastIndexOf("\\") + 1);
   onSongClick(name, filePath);
 });
+
+function renderSongs() {
+  const list = document.getElementById("songList");
+  list.innerHTML = folderData
+    .map(
+      (i) =>
+        `<li class="song-item" onclick="onSongClick('${i.name}','${
+          i.file
+        }') ">${i.name} (${i.duration})  
+        <span class="myBtn" onclick="openModel(event,'${i.file}')"        
+        style="display:flex"
+        >
+        <img src="images/playing.gif" width="22px" style="margin-right:4px; display:${
+          currentlyPlaying == i.file ? "block" : "none"
+        }" id="${i.file}") />
+        <img src="images/add.png" width="22px" />
+        </span></li>`
+    )
+    .join("");
+}
 
 function onSongClick(name, path) {
   const title = document.getElementById("songTitle");
@@ -178,6 +188,9 @@ function onSongClick(name, path) {
   source.src = "file://" + path;
   audio.load();
   audio.play();
+
+  currentlyPlaying = path;
+  renderSongs();
 }
 
 function getDuration(filePath) {
