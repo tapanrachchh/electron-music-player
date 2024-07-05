@@ -240,8 +240,9 @@ async function get_songs(name) {
 }
 
 ipcMain.on("duration-output", (event, data) => {
-  // TODO: Add cache
-  win.webContents.send("on-folder-selected", data);
+  const { folderPath, files } = data;
+  store.set(folderPath, files);
+  win.webContents.send("on-folder-selected", files);
 });
 
 function load_songs(arg, arg2) {
@@ -273,34 +274,9 @@ ipcMain.on("load_playlist", async (event, name) => {
   load_songs(songs, name);
 });
 
-ipcMain.on("pre_selected", (event, _path) => {
-  let arr = [];
-
-  fs.readdir(_path, async (err, files) => {
-    await Promise.all(
-      files.map(async (i, index) => {
-        let audio_exts = [".mp3", ".wav"];
-        const path = require("path");
-
-        if (audio_exts.includes(path.extname(i))) {
-          let x = {
-            track: index + 1,
-            name: i,
-            duration: "--:--",
-            file: _path + "/" + i,
-          };
-
-          arr.push(x);
-        }
-      })
-    );
-    test = _path + "/" + arr[0];
-    let temp = {};
-    temp.files = arr;
-    temp.path = _path + "/";
-
-    win.webContents.send("on-folder-selected", arr);
-  });
+ipcMain.on("pre_selected", (event, folderPath) => {
+  const files = store.get(folderPath);
+  win.webContents.send("on-folder-selected", files);
 });
 
 ipcMain.on("close_and_restart", (event) => {
@@ -375,7 +351,10 @@ ipcMain.on("add_new_folder", (event, path) => {
         temp.files = arr;
         temp.path = data.filePaths[0] + "/";
 
-        win.webContents.send("get-duration", arr);
+        win.webContents.send("get-duration", {
+          folderPath: n_path,
+          files: arr,
+        });
       });
     });
 });

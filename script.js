@@ -78,10 +78,13 @@ function secondsToMinutesAndSeconds(seconds) {
 }
 
 ipcRenderer.on("get-duration", async function (evt, data) {
-  for (const file of data) {
+  const { files } = data;
+  for (const file of files) {
     try {
       file.duration = secondsToMinutesAndSeconds(await getDuration(file.file));
-    } catch (error) {}
+    } catch (error) {
+      console.log("🚀 ~ Error getting duration:", error);
+    }
   }
   ipcRenderer.send("duration-output", data);
 });
@@ -125,9 +128,7 @@ ipcRenderer.on("on-loaded", function (evt, data) {
         <span></span>
         <span>
         <img src="images/folder.png" width="18px"/> ${each.name} 
-        </span>
-
-        
+        </span>        
         <span onclick="delete_folder(event,'${each.path}')"><img src="images/bin.png" width="16px"/></span></li>  `
     )
     .join("");
