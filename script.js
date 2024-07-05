@@ -4,6 +4,7 @@ var toBeAdded = false;
 var modal = document.getElementById("myModal");
 var modal1 = document.getElementById("myModal1");
 var modal2 = document.getElementById("myModal2");
+var progressModal = document.getElementById("progressModal");
 
 var btn = document.getElementsByClassName("myBtn");
 
@@ -78,14 +79,22 @@ function secondsToMinutesAndSeconds(seconds) {
 }
 
 ipcRenderer.on("get-duration", async function (evt, data) {
+  progressModal.style.display = "block";
+  const progressBar = document.getElementById("progressBar");
+  const progressText = document.getElementById("progressText");
+
   const { files } = data;
-  for (const file of files) {
+  const total = files.length;
+  for (const [index, file] of files.entries()) {
     try {
+      progressText.innerText = "Processing... " + file.name;
+      progressBar.style.width = Number(((index + 1) * 100) / total) + "%";
       file.duration = secondsToMinutesAndSeconds(await getDuration(file.file));
     } catch (error) {
       console.log("🚀 ~ Error getting duration:", error);
     }
   }
+  progressModal.style.display = "none";
   ipcRenderer.send("duration-output", data);
 });
 
